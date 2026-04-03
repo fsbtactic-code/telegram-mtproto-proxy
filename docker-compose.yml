@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  mtproto-proxy:
+    image: telegrammessenger/mtproto-proxy:latest
+    container_name: mtproto-proxy
+    restart: always
+    network_mode: "host"
+    environment:
+      # Порт, на котором будет работать прокси (должен быть открыт в Google Cloud Firewall)
+      - PORT=${PROXY_PORT:-443}
+      # Секрет, сгенерируйте с помощью команды (например, curl -s https://core.telegram.org/getProxySecret -o proxy-secret) 
+      # Или просто сгенерируйте 32 символа в hex (например `hexdump -vn 16 -e '4/4 "%08x" 1 "\n"' /dev/urandom`)
+      - SECRET=${SECRET}
+      # Количество воркеров. Оставьте 1 для начала
+      - WORKERS=1
+    volumes:
+      - ./proxy-data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

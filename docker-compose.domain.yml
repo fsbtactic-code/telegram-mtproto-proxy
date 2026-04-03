@@ -1,0 +1,21 @@
+# Второй экземпляр прокси (отдельный порт и секрет). В Telegram в поле server укажите свой домен (A-запись → IP этой VM).
+# Запуск: export SECRET_DOMAIN=... PROXY_PORT_DOMAIN=8443 && sudo -E docker compose -f docker-compose.domain.yml up -d
+version: '3.7'
+
+services:
+  mtproto-proxy-domain:
+    image: telegrammessenger/proxy:latest
+    container_name: mtproto-proxy-domain
+    restart: always
+    ports:
+      - "${PROXY_PORT_DOMAIN:-8443}:443"
+    environment:
+      - SECRET=${SECRET_DOMAIN}
+      - WORKERS=1
+    volumes:
+      - ./proxy-data-domain:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

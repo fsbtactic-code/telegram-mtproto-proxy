@@ -64,7 +64,30 @@ chmod +x install.sh
   sudo docker-compose restart
   ```
 
+## 📌 Второй прокси на своём домене
+
+Официальный образ не требует отдельного SSL на сервере для обычного MTProto: в ссылке в поле **server** можно указать **домен**, если у него **A-запись** указывает на IP той же VM, где крутится второй контейнер.
+
+1. В DNS у регистратора: **A** для поддомена (например `mt.example.com`) → **внешний IP** вашей VM.
+2. В **Firewall** GCP: откройте **новый** TCP-порт (не тот, что у первого прокси), например `8443`.
+3. На сервере в каталоге репозитория:
+   ```bash
+   git pull
+   chmod +x install-domain.sh
+   ./install-domain.sh
+   ```
+   Скрипт спросит домен и порт, поднимет контейнер `mtproto-proxy-domain` и выведет ссылки уже с `server=ваш_домен`.
+
+Ручной запуск без скрипта:
+```bash
+export SECRET_DOMAIN=$(hexdump -vn 16 -e '4/4 "%08x" 1 ""' /dev/urandom)
+export PROXY_PORT_DOMAIN=8443
+sudo -E docker compose -f docker-compose.domain.yml up -d
+```
+
+Логи второго прокси: `sudo docker compose -f docker-compose.domain.yml logs -f mtproto-proxy-domain` (или `docker-compose` вместо `docker compose`).
+
 ## 🔒 Безопасность и DD 
-Для защиты от DPI-блокировок часто используют «Fake TLS» прокси (секрет, начинающийся с букв `ee`). Этот скрипт генерирует обычный `hex` секрет.
-Если вы хотите использовать Fake TLS, вам нужно будет сгенерировать специальный секрет, который начинается с `ee`, и добавить домен.
-Подробнее об этом можно почитать в официальном репозитории: https://hub.docker.com/r/telegrammessenger/mtproto-proxy
+Для защиты от DPI-блокировок часто используют «Fake TLS» прокси (секрет, начинающийся с букв `ee`). Эти скрипты генерируют обычный `hex` секрет.
+Fake TLS — отдельная настройка; см. обсуждения вокруг MTProxy и клиентов Telegram.
+Официальный образ: https://hub.docker.com/r/telegrammessenger/proxy
